@@ -1,0 +1,21 @@
+{
+    "name": "quick-socket-server",
+    "scripts": {
+        "build": "gulp build",
+        "build-debug": "npm run build -- --dev",
+        "build-profile": "npm run build -- --profile",
+        "build-release": "npm run build -- --release",
+        "install": "npm run build-release",
+        "test": "cargo test"
+    },
+    "devDependencies": {
+        "@babel/core": "^7.15.8",
+        "gulp": "^4.0.2",
+        "gulp-babel": "^8.0.0",
+        "gulp-typescript": "^6.0.0-alpha.1",
+        "typescript": "^4.4.4"
+    },
+    "dependencies": {
+        "clear-logger": "^1.0.7"
+    }
+}
