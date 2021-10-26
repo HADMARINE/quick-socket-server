@@ -1,6 +1,7 @@
 use crate::app::event::manager;
 use crate::error::predeclared::QuickSocketError;
 use json::{object, JsonValue};
+use log::trace;
 use serde::{Deserialize, Serialize};
 use std::cell::RefCell;
 use std::collections::HashMap;
@@ -12,6 +13,7 @@ use std::thread;
 use std::time::Duration;
 use tungstenite::{accept, Message, WebSocket};
 use uuid::Uuid;
+use wasm_bindgen::prelude::*;
 
 use self::event::ResponseStatus;
 
@@ -88,36 +90,14 @@ impl TcpChannelCreatePreferences {
         }
     }
 }
-#[derive(Clone, Debug)]
+
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct UdpChannelCreatePreferences {
     pub delete_client_when_closed: bool,
     pub preset: Option<String>,
 }
 
 impl UdpChannelCreatePreferences {
-    pub fn from_jsobj(
-        cx: &mut FunctionContext,
-        argument: Handle<JsObject>,
-    ) -> Result<UdpChannelCreatePreferences, Box<dyn std::error::Error>> {
-        Ok(UdpChannelCreatePreferences {
-            // TODO : Refactor this
-            delete_client_when_closed: match argument.get(cx, "deleteClientWhenClosed") {
-                Ok(v) => {
-                    let v: Handle<JsBoolean> = v.downcast(cx)?;
-                    v.value(cx)
-                }
-                Err(_) => return Err(QuickSocketError::ChannelInitializeFail.to_box()),
-            },
-            preset: match argument.get(cx, "preset") {
-                Ok(v) => {
-                    let v: Handle<JsString> = v.downcast(cx)?;
-                    Some(v.value(cx))
-                }
-                Err(_) => return Err(QuickSocketError::ChannelInitializeFail.to_box()),
-            },
-        })
-    }
-
     pub fn to_std_pref(&self) -> ChannelCreatePreferences {
         ChannelCreatePreferences {
             delete_client_when_closed: self.delete_client_when_closed,
@@ -195,7 +175,7 @@ pub struct Channel<T> {
     pub channel_id: String,
     pub port: u16,
     pub pref: ChannelCreatePreferences,
-    pub js_handler: JsHandlerContainer<'static>,
+    pub js_handler: (), // TODO : Fill here
     event_handlers: Arc<
         RwLock<
             HashMap<
