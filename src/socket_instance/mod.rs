@@ -175,7 +175,6 @@ pub struct Channel<T> {
     pub channel_id: String,
     pub port: u16,
     pub pref: ChannelCreatePreferences,
-    pub js_handler: (), // TODO : Fill here
     event_handlers: Arc<
         RwLock<
             HashMap<
@@ -790,7 +789,6 @@ impl QuickSocketInstance {
     pub fn create_tcp_channel(
         &self,
         setter: fn(&mut TcpChannel),
-        handler: JsHandlerContainer,
         pref: TcpChannelCreatePreferences,
     ) -> Result<Arc<TcpChannel>, Box<dyn std::error::Error>> {
         let addr = "127.0.0.1:0";
@@ -824,7 +822,6 @@ impl QuickSocketInstance {
                 }
             },
             pref: pref.clone().to_std_pref(),
-            js_handler: handler,
         };
 
         setter(&mut channel);
@@ -1027,7 +1024,6 @@ impl QuickSocketInstance {
     pub fn create_udp_channel(
         &self,
         setter: fn(&mut UdpChannel),
-        handler: JsHandlerContainer,
         pref: UdpChannelCreatePreferences,
     ) -> Result<Arc<UdpChannel>, Box<dyn std::error::Error>> {
         let addr = "127.0.0.1:0";
@@ -1060,7 +1056,6 @@ impl QuickSocketInstance {
             }
             .clone(),
             pref: pref.clone().to_std_pref(),
-            js_handler: handler,
         };
 
         setter(&mut channel);

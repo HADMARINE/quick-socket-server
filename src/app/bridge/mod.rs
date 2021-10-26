@@ -1,5 +1,3 @@
-use crate::js_interface::JsInterface;
-
 use json::JsonValue;
 use std::collections::HashMap;
 
@@ -7,8 +5,7 @@ use std::collections::HashMap;
 
 pub type BridgeMapType = HashMap<String, BridgeHandlerType>;
 
-pub type BridgeHandlerType =
-    Box<dyn Fn(JsonValue, &JsInterface) -> Result<(), Box<dyn std::error::Error>>>;
+pub type BridgeHandlerType = Box<dyn Fn(JsonValue) -> Result<(), Box<dyn std::error::Error>>>;
 
 pub fn manager() -> BridgeMapType {
     // return match preset.as_str() {
@@ -24,7 +21,7 @@ pub fn manager() -> BridgeMapType {
     map
 }
 
-fn print(value: JsonValue, interface: &JsInterface) -> Result<(), Box<dyn std::error::Error>> {
+fn print(value: JsonValue) -> Result<(), Box<dyn std::error::Error>> {
     println!("value: {}", value.to_string());
     Ok(())
 }

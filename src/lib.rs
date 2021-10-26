@@ -35,6 +35,7 @@ interface ITcpChannelCreatePreferences {
 interface IUdpChannelCreatePreferences {
 
 };
+
 "#;
 
 #[wasm_bindgen]
@@ -46,7 +47,7 @@ extern "C" {
 }
 
 #[wasm_bindgen]
-pub fn createTcpChannel(cfg: &ITcpChannelCreatePreferences) -> Result<JsValue, JsValue> {
+pub fn createTcpChannel(cfg: &ITcpChannelCreatePreferences) -> Result<(), JsValue> {
     let conf: TcpChannelCreatePreferences = match cfg.into_serde() {
         Ok(v) => v,
         Err(e) => return Err(JsValue::from_str("config is invalid")),
@@ -56,9 +57,15 @@ pub fn createTcpChannel(cfg: &ITcpChannelCreatePreferences) -> Result<JsValue, J
 }
 
 #[wasm_bindgen]
-pub fn createUdpChannel(cfg: &IUdpChannelCreatePreferences) -> Result<JsValue, JsValue> {
+pub fn createUdpChannel(cfg: &IUdpChannelCreatePreferences) -> Result<(), JsValue> {
     let conf: UdpChannelCreatePreferences = match cfg.into_serde() {
         Ok(v) => v,
         Err(e) => return Err(JsValue::from_str("config is invalid")),
     };
+    Ok(())
+}
+
+#[wasm_bindgen]
+pub fn eventHandler(event: String, data: String) -> Result<(), JsValue> {
+    Ok(())
 }
