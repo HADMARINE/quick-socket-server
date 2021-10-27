@@ -1,0 +1,17 @@
+{
+    "name": "quick-socket-server",
+    "scripts": {
+        "build": "gulp build",
+        "build-debug": "npm run build -- --dev",
+        "build-profile": "npm run build -- --profile",
+        "build-release": "npm run build -- --release",
+        "install": "npm run build-release",
+        "test": "cargo test"
+    },
+    "devDependencies": {
+        "gulp": "^4.0.2"
+    },
+    "dependencies": {
+        "clear-logger": "^1.0.7"
+    }
+}
