@@ -44,7 +44,6 @@ pub struct QuickSocketInstance {
     >,
     pub properties: Properties,
     pub self_instance: Option<Arc<RwLock<QuickSocketInstance>>>,
-    // pub js_interface: Option<JsInterface>
 }
 
 #[derive(Clone, Debug)]
