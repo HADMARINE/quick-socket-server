@@ -1,6 +1,5 @@
 use json::JsonValue;
 use std::collections::HashMap;
-use wasm_bindgen::JsValue;
 
 // pub mod echo;
 
@@ -26,21 +25,21 @@ pub fn manager() -> BridgeMapType {
     map
 }
 
-pub fn resolver(event: String, data: String) -> Result<(), JsValue> {
+pub fn resolver(event: String, data: String) -> Result<(), String> {
     let manager_data = manager();
     let v = match manager_data.get(&event) {
         Some(v) => v,
-        None => return Err(JsValue::from_str("invalid event name")),
+        None => return Err(String::from("invalid event name")),
     };
 
     let data = match json::parse(data.as_str()) {
         Ok(v) => v,
-        Err(_) => return Err(JsValue::from_str("json parse failed")),
+        Err(_) => return Err(String::from("json parse failed")),
     };
 
     match v(data) {
         Ok(v) => (),
-        Err(_) => return Err(JsValue::from_str("event handler has failed to resolve")),
+        Err(_) => return Err(String::from("event handler has failed to resolve")),
     };
 
     Ok(())

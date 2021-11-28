@@ -1,8 +1,5 @@
-/target
-**/*.rs.bk
-Cargo.lock
-bin/
-pkg/
-wasm-pack.log
-node_modules
-yarn-error.log
+target
+index.node
+**/node_modules
+**/.DS_Store
+npm-debug.log*

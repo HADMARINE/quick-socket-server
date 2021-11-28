@@ -1,8 +1,7 @@
 use crate::app::event::manager;
 use crate::error::predeclared::QuickSocketError;
 use json::{object, JsonValue};
-use log::trace;
-use serde::{Deserialize, Serialize};
+use neon::prelude::{FunctionContext, Handle, JsBoolean, JsObject, JsString, Object};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use std::io::ErrorKind;
@@ -11,9 +10,9 @@ use std::rc::Rc;
 use std::sync::{Arc, Mutex, RwLock};
 use std::thread;
 use std::time::Duration;
+use tracing::trace;
 use tungstenite::{accept, Message, WebSocket};
 use uuid::Uuid;
-use wasm_bindgen::prelude::*;
 
 use self::event::ResponseStatus;
 
@@ -44,6 +43,7 @@ pub struct QuickSocketInstance {
     >,
     pub properties: Properties,
     pub self_instance: Option<Arc<RwLock<QuickSocketInstance>>>,
+    // pub js_interface: Option<JsInterface>
 }
 
 #[derive(Clone, Debug)]
@@ -66,7 +66,7 @@ impl ChannelClient {
     }
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
 pub struct TcpChannelCreatePreferences {
     pub delete_client_when_closed: bool,
     pub concurrent: bool,
@@ -74,6 +74,36 @@ pub struct TcpChannelCreatePreferences {
 }
 
 impl TcpChannelCreatePreferences {
+    pub fn from_jsobj(
+        cx: &mut FunctionContext,
+        argument: Handle<JsObject>,
+    ) -> Result<TcpChannelCreatePreferences, Box<dyn std::error::Error>> {
+        Ok(TcpChannelCreatePreferences {
+            // TODO : Refactor this
+            delete_client_when_closed: match argument.get(cx, "deleteClientWhenClosed") {
+                Ok(v) => {
+                    let v: Handle<JsBoolean> = v.downcast(cx)?;
+                    v.value(cx)
+                }
+                Err(_) => return Err(QuickSocketError::ChannelInitializeFail.to_box()),
+            },
+            concurrent: match argument.get(cx, "concurrent") {
+                Ok(v) => {
+                    let v: Handle<JsBoolean> = v.downcast(cx)?;
+                    v.value(cx)
+                }
+                Err(_) => return Err(QuickSocketError::ChannelInitializeFail.to_box()),
+            },
+            preset: match argument.get(cx, "preset") {
+                Ok(v) => {
+                    let v: Handle<JsString> = v.downcast(cx)?;
+                    Some(v.value(cx))
+                }
+                Err(_) => return Err(QuickSocketError::ChannelInitializeFail.to_box()),
+            },
+        })
+    }
+
     pub fn to_std_pref(&self) -> ChannelCreatePreferences {
         ChannelCreatePreferences {
             delete_client_when_closed: self.delete_client_when_closed,
@@ -89,14 +119,36 @@ impl TcpChannelCreatePreferences {
         }
     }
 }
-
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug)]
 pub struct UdpChannelCreatePreferences {
     pub delete_client_when_closed: bool,
     pub preset: Option<String>,
 }
 
 impl UdpChannelCreatePreferences {
+    pub fn from_jsobj(
+        cx: &mut FunctionContext,
+        argument: Handle<JsObject>,
+    ) -> Result<UdpChannelCreatePreferences, Box<dyn std::error::Error>> {
+        Ok(UdpChannelCreatePreferences {
+            // TODO : Refactor this
+            delete_client_when_closed: match argument.get(cx, "deleteClientWhenClosed") {
+                Ok(v) => {
+                    let v: Handle<JsBoolean> = v.downcast(cx)?;
+                    v.value(cx)
+                }
+                Err(_) => return Err(QuickSocketError::ChannelInitializeFail.to_box()),
+            },
+            preset: match argument.get(cx, "preset") {
+                Ok(v) => {
+                    let v: Handle<JsString> = v.downcast(cx)?;
+                    Some(v.value(cx))
+                }
+                Err(_) => return Err(QuickSocketError::ChannelInitializeFail.to_box()),
+            },
+        })
+    }
+
     pub fn to_std_pref(&self) -> ChannelCreatePreferences {
         ChannelCreatePreferences {
             delete_client_when_closed: self.delete_client_when_closed,
@@ -174,6 +226,7 @@ pub struct Channel<T> {
     pub channel_id: String,
     pub port: u16,
     pub pref: ChannelCreatePreferences,
+    // pub js_handler: JsHandlerContainer<'static>,
     event_handlers: Arc<
         RwLock<
             HashMap<
