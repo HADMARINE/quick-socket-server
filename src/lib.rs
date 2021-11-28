@@ -44,16 +44,9 @@ pub fn execute_js_handler(event: String, data: String) -> Result<(), String> {
         let arg = cx.empty_object();
         let p_event = cx.string(event);
         let p_data = cx.string(data);
-        if let Err(_) = arg.set(&mut cx, "event", p_event) {
-            // *error_ptr = Some(String::from("HashMapSetError"));
-        };
-
-        if let Err(_) = arg.set(&mut cx, "data", p_data) {
-            // *error_ptr = Some(String::from("HashMapSetError"));
-        };
 
         let undef_val = cx.undefined();
-        if let Err(e) = function.call(&mut cx, undef_val, vec![arg]) {
+        if let Err(e) = function.call(&mut cx, undef_val, vec![p_event, p_data]) {
             // *error_ptr = Some(e.to_string())
         };
 
@@ -75,7 +68,7 @@ fn create_tcp_channel(mut cx: FunctionContext) -> JsResult<JsObject> {
         Err(_) => return Err(Throw),
     }; // Preferences
 
-    let handler: Handle<JsFunction> = cx.argument(1)?;
+    // let handler: Handle<JsFunction> = cx.argument(1)?;
 
     let write_locked = match INSTANCE.write() {
         Ok(v) => v,
@@ -94,7 +87,7 @@ fn create_tcp_channel(mut cx: FunctionContext) -> JsResult<JsObject> {
     return_object.set(&mut cx, "port", port_value)?;
 
     let uuid_value = cx.string(channel.channel_id.clone());
-    return_object.set(&mut cx, "uuid", uuid_value);
+    return_object.set(&mut cx, "uuid", uuid_value)?;
 
     Ok(return_object)
 }
