@@ -41,7 +41,6 @@ pub fn execute_js_handler(event: String, data: String) -> Result<(), String> {
             }
         };
 
-        let arg = cx.empty_object();
         let p_event = cx.string(event);
         let p_data = cx.string(data);
 
