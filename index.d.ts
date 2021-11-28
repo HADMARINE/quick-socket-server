@@ -33,9 +33,9 @@ export namespace ChannelCreatePreferences {
 
 export function createTcpChannel(
   pref: ChannelCreatePreferences.Tcp,
-  handler: JsHandlerFunction,
 ): JsInterface;
 export function createUdpChannel(
   pref: ChannelCreatePreferences.Udp,
-  handler: JsHandlerFunction,
 ): JsInterface;
+export function eventHandler(event: string, data: string): void;
+export function setJsEventHandler(f: (event:string, data: string) => void): void;
