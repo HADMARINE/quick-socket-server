@@ -1,11 +1,5 @@
-use std::{
-    borrow::BorrowMut,
-    cell::RefCell,
-    rc::Rc,
-    sync::{Arc, RwLock},
-};
+use std::sync::{Arc, RwLock};
 
-use json::object;
 use neon::{prelude::*, result::Throw};
 mod app;
 mod error;
@@ -16,14 +10,12 @@ use socket_instance::{
     QuickSocketInstance, TcpChannelCreatePreferences, UdpChannelCreatePreferences,
 };
 
-use crate::error::predeclared::QuickSocketError;
-
 lazy_static::lazy_static! {
     static ref INSTANCE: Arc<RwLock<QuickSocketInstance>> = QuickSocketInstance::new();
 }
 
 pub static mut JS_HANDLER_CHANNEL: Option<neon::prelude::Channel> = None;
-pub static mut JS_HANDLER_FUNCTION: Option<JsFunction> = None;
+pub static mut JS_HANDLER_FUNCTION: Option<Root<JsFunction>> = None;
 
 pub fn execute_js_handler(event: String, data: String) -> Result<(), String> {
     let channel: &neon::prelude::Channel = unsafe {
@@ -34,9 +26,9 @@ pub fn execute_js_handler(event: String, data: String) -> Result<(), String> {
     };
 
     channel.send(move |mut cx| {
-        let function: &neon::prelude::JsFunction = unsafe {
+        let function = unsafe {
             match &JS_HANDLER_FUNCTION {
-                Some(v) => v,
+                Some(v) => v.to_inner(&mut cx),
                 None => panic!("Instance initialize invalid"),
             }
         };
@@ -51,12 +43,6 @@ pub fn execute_js_handler(event: String, data: String) -> Result<(), String> {
 
         Ok(())
     });
-
-    // match error {
-    //     Some(_) => Err("Execution Error".to_string()),
-    //     None => Ok(()),
-    // }
-
     Ok(())
 }
 
@@ -66,8 +52,6 @@ fn create_tcp_channel(mut cx: FunctionContext) -> JsResult<JsObject> {
         Ok(v) => v,
         Err(_) => return Err(Throw),
     }; // Preferences
-
-    // let handler: Handle<JsFunction> = cx.argument(1)?;
 
     let write_locked = match INSTANCE.write() {
         Ok(v) => v,
@@ -97,8 +81,6 @@ fn create_udp_channel(mut cx: FunctionContext) -> JsResult<JsObject> {
         Ok(v) => v,
         Err(_) => return Err(Throw),
     }; // Preferences
-
-    // let handler: Handle<JsFunction> = cx.argument(1)?;
 
     let write_locked = match INSTANCE.write() {
         Ok(v) => v,
@@ -137,7 +119,7 @@ fn event_handler_rs(mut cx: FunctionContext) -> JsResult<JsUndefined> {
 
 fn set_js_event_handler(mut cx: FunctionContext) -> JsResult<JsUndefined> {
     let func: Handle<JsFunction> = cx.argument(0)?;
-    let func_origin = *func;
+    let func_origin = func.root(&mut cx);
     let channel = cx.channel();
     let undefined_value = cx.undefined();
     // let rs = cx.borrow_mut();
