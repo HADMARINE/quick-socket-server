@@ -1,6 +1,6 @@
 {
     "name": "quick-socket",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "description": "socket connection implemented with rust",
     "main": "index.node",
     "scripts": {
