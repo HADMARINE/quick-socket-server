@@ -1,15 +1,9 @@
 use json::JsonValue;
 use std::collections::HashMap;
 
-// pub mod echo;
-
 pub type BridgeMapType = HashMap<String, BridgeHandlerType>;
 
 pub type BridgeHandlerType = Box<dyn Fn(JsonValue) -> Result<(), Box<dyn std::error::Error>>>;
-
-// lazy_static::lazy_static! {
-//     static ref BRIDGE_EVENT_LIST:BridgeMapType = manager();
-// }
 
 pub fn manager() -> BridgeMapType {
     // return match preset.as_str() {

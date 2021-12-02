@@ -1,14 +1,18 @@
 use std::sync::{Arc, RwLock};
 
+use json::JsonValue;
 use neon::{prelude::*, result::Throw};
 mod app;
 mod error;
+mod json_parser;
 mod socket_instance;
 mod util;
 
 use socket_instance::{
     QuickSocketInstance, TcpChannelCreatePreferences, UdpChannelCreatePreferences,
 };
+
+use crate::json_parser::parse_json_to_js;
 
 lazy_static::lazy_static! {
     static ref INSTANCE: Arc<RwLock<QuickSocketInstance>> = QuickSocketInstance::new();
@@ -17,7 +21,7 @@ lazy_static::lazy_static! {
 pub static mut JS_HANDLER_CHANNEL: Option<neon::prelude::Channel> = None;
 pub static mut JS_HANDLER_FUNCTION: Option<Root<JsFunction>> = None;
 
-pub fn execute_js_handler(event: String, data: String) -> Result<(), String> {
+pub fn execute_js_handler(event: String, data: JsonValue) -> Result<(), String> {
     let channel: &neon::prelude::Channel = unsafe {
         match &JS_HANDLER_CHANNEL {
             Some(v) => v,
@@ -33,13 +37,36 @@ pub fn execute_js_handler(event: String, data: String) -> Result<(), String> {
             }
         };
 
-        let p_event = cx.string(event);
-        let p_data = cx.string(data);
+        let p_event: Handle<JsValue> = match cx.string(event).downcast(&mut cx) {
+            Ok(v) => v,
+            Err(_) => return cx.throw_error("error occured while downcast"),
+        };
+
+        let p_data = match match parse_json_to_js(&mut cx, data) {
+            Ok(v) => v,
+            Err(_) => return cx.throw_error("json parse fail"),
+        }
+        .downcast(&mut cx)
+        {
+            Ok(v) => v,
+            Err(_) => return cx.throw_error("error occured while downcast"),
+        };
 
         let undef_val = cx.undefined();
         if let Err(e) = function.call(&mut cx, undef_val, vec![p_event, p_data]) {
             // *error_ptr = Some(e.to_string())
         };
+
+        // let p_data = parse_json_to_js(&mut cx, data);
+        // let p_data = match p_data {
+        //     Ok(v) => v,
+        //     Err(_) => return cx.throw_error("json parse fail"),
+        // };
+        // let p_data = p_data.downcast(&mut cx);
+        // let p_data = match p_data {
+        //     Ok(v) => v,
+        //     Err(_) => return cx.throw_error("error occured while downcast"),
+        // };
 
         Ok(())
     });
