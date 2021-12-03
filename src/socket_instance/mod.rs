@@ -226,7 +226,6 @@ pub struct Channel<T> {
     pub channel_id: String,
     pub port: u16,
     pub pref: ChannelCreatePreferences,
-    // pub js_handler: JsHandlerContainer<'static>,
     event_handlers: Arc<
         RwLock<
             HashMap<

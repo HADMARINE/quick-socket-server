@@ -1,14 +1,19 @@
 use std::sync::{Arc, RwLock};
 
+use json::JsonValue;
+use json_parser::parse_js_to_json;
 use neon::{prelude::*, result::Throw};
 mod app;
 mod error;
+mod json_parser;
 mod socket_instance;
 mod util;
 
 use socket_instance::{
     QuickSocketInstance, TcpChannelCreatePreferences, UdpChannelCreatePreferences,
 };
+
+use crate::json_parser::parse_json_to_js;
 
 lazy_static::lazy_static! {
     static ref INSTANCE: Arc<RwLock<QuickSocketInstance>> = QuickSocketInstance::new();
@@ -17,7 +22,7 @@ lazy_static::lazy_static! {
 pub static mut JS_HANDLER_CHANNEL: Option<neon::prelude::Channel> = None;
 pub static mut JS_HANDLER_FUNCTION: Option<Root<JsFunction>> = None;
 
-pub fn execute_js_handler(event: String, data: String) -> Result<(), String> {
+pub fn execute_js_handler(event: String, data: JsonValue) -> Result<(), String> {
     let channel: &neon::prelude::Channel = unsafe {
         match &JS_HANDLER_CHANNEL {
             Some(v) => v,
@@ -33,11 +38,23 @@ pub fn execute_js_handler(event: String, data: String) -> Result<(), String> {
             }
         };
 
-        let p_event = cx.string(event);
-        let p_data = cx.string(data);
+        let p_event: Handle<JsValue> = match cx.string(event).downcast(&mut cx) {
+            Ok(v) => v,
+            Err(_) => return cx.throw_error("error occured while downcast"),
+        };
+
+        let p_data = match match parse_json_to_js(&mut cx, data) {
+            Ok(v) => v,
+            Err(_) => return cx.throw_error("json parse fail"),
+        }
+        .downcast(&mut cx)
+        {
+            Ok(v) => v,
+            Err(_) => return cx.throw_error("error occured while downcast"),
+        };
 
         let undef_val = cx.undefined();
-        if let Err(e) = function.call(&mut cx, undef_val, vec![p_event, p_data]) {
+        if let Err(_) = function.call(&mut cx, undef_val, vec![p_event, p_data]) {
             // *error_ptr = Some(e.to_string())
         };
 
@@ -105,13 +122,14 @@ fn create_udp_channel(mut cx: FunctionContext) -> JsResult<JsObject> {
 }
 
 fn event_handler_rs(mut cx: FunctionContext) -> JsResult<JsUndefined> {
+    //bridge
     let event: Handle<JsString> = cx.argument(0)?;
-    let data: Handle<JsString> = cx.argument(1)?;
+    let data: Handle<JsObject> = cx.argument(1)?;
 
     let parsed_event: String = event.value(&mut cx);
-    let parsed_data: String = data.value(&mut cx);
+    let parsed_data: json::object::Object = parse_js_to_json(&mut cx, data)?;
 
-    match app::bridge::resolver(parsed_event, parsed_data) {
+    match app::bridge::resolver(parsed_event, parsed_data.into()) {
         Ok(_) => Ok(cx.undefined()),
         Err(e) => cx.throw_error(e),
     }

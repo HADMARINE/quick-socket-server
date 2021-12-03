@@ -2,10 +2,7 @@ use std::collections::HashMap;
 
 use json::JsonValue;
 
-use crate::{
-    error::predeclared::QuickSocketError,
-    socket_instance::{event::ResponseStatus, ChannelController},
-};
+use crate::{error::predeclared::QuickSocketError, socket_instance::ChannelController};
 
 use super::EventMapType;
 
