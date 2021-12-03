@@ -19,16 +19,11 @@ pub fn manager() -> BridgeMapType {
     map
 }
 
-pub fn resolver(event: String, data: String) -> Result<(), String> {
+pub fn resolver(event: String, data: JsonValue) -> Result<(), String> {
     let manager_data = manager();
     let v = match manager_data.get(&event) {
         Some(v) => v,
         None => return Err(String::from("invalid event name")),
-    };
-
-    let data = match json::parse(data.as_str()) {
-        Ok(v) => v,
-        Err(_) => return Err(String::from("json parse failed")),
     };
 
     match v(data) {

@@ -37,5 +37,5 @@ export function createTcpChannel(
 export function createUdpChannel(
   pref: ChannelCreatePreferences.Udp,
 ): JsInterface;
-export function eventHandler(event: string, data: string): void;
-export function setJsEventHandler(f: (event:string, data: string) => void): void;
+export function eventHandler(event: string, data: Record<string, any>): void;
+export function setJsEventHandler(f: (event:string, data: Record<string, any>) => void): void;

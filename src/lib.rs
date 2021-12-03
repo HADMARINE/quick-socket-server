@@ -1,6 +1,7 @@
 use std::sync::{Arc, RwLock};
 
 use json::JsonValue;
+use json_parser::parse_js_to_json;
 use neon::{prelude::*, result::Throw};
 mod app;
 mod error;
@@ -53,20 +54,9 @@ pub fn execute_js_handler(event: String, data: JsonValue) -> Result<(), String> 
         };
 
         let undef_val = cx.undefined();
-        if let Err(e) = function.call(&mut cx, undef_val, vec![p_event, p_data]) {
+        if let Err(_) = function.call(&mut cx, undef_val, vec![p_event, p_data]) {
             // *error_ptr = Some(e.to_string())
         };
-
-        // let p_data = parse_json_to_js(&mut cx, data);
-        // let p_data = match p_data {
-        //     Ok(v) => v,
-        //     Err(_) => return cx.throw_error("json parse fail"),
-        // };
-        // let p_data = p_data.downcast(&mut cx);
-        // let p_data = match p_data {
-        //     Ok(v) => v,
-        //     Err(_) => return cx.throw_error("error occured while downcast"),
-        // };
 
         Ok(())
     });
@@ -132,13 +122,14 @@ fn create_udp_channel(mut cx: FunctionContext) -> JsResult<JsObject> {
 }
 
 fn event_handler_rs(mut cx: FunctionContext) -> JsResult<JsUndefined> {
+    //bridge
     let event: Handle<JsString> = cx.argument(0)?;
-    let data: Handle<JsString> = cx.argument(1)?;
+    let data: Handle<JsObject> = cx.argument(1)?;
 
     let parsed_event: String = event.value(&mut cx);
-    let parsed_data: String = data.value(&mut cx);
+    let parsed_data: json::object::Object = parse_js_to_json(&mut cx, data)?;
 
-    match app::bridge::resolver(parsed_event, parsed_data) {
+    match app::bridge::resolver(parsed_event, parsed_data.into()) {
         Ok(_) => Ok(cx.undefined()),
         Err(e) => cx.throw_error(e),
     }

@@ -175,9 +175,9 @@ pub fn parse_js_to_json(
 }
 
 pub fn parse_json_to_js<'a, C>(
-    cx: &'a mut C,
+    cx: &mut C,
     value: json::JsonValue,
-) -> Result<Handle<JsObject>, Box<dyn std::error::Error>>
+) -> Result<Handle<'a, JsObject>, Box<dyn std::error::Error>>
 where
     C: Context<'a>,
 {
@@ -293,5 +293,7 @@ where
         Ok(JsString::new(cx, value))
     }
 
-    Ok(object(cx, value)?)
+    let res = object(cx, value)?;
+
+    Ok(res)
 }
