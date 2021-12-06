@@ -140,7 +140,6 @@ fn set_js_event_handler(mut cx: FunctionContext) -> JsResult<JsUndefined> {
     let func_origin = func.root(&mut cx);
     let channel = cx.channel();
     let undefined_value = cx.undefined();
-    // let rs = cx.borrow_mut();
     unsafe { JS_HANDLER_CHANNEL = Some(channel) };
     unsafe { JS_HANDLER_FUNCTION = Some(func_origin) };
 
